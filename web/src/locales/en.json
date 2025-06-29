@@ -1,0 +1,157 @@
+{
+  "message": {
+    "hello": "Hello world",
+    "error": {
+      "test": "Test error"
+    }
+  },
+  "header": {
+    "projects": "Projects",
+    "employees": "Employees",
+    "sign-in": "Sign in",
+    "profile": "Profile",
+    "menu": {
+      "settings": "Settings",
+      "messages": "Messages",
+      "logout": "Logout",
+      "project-manager": "Project Manager",
+      "human-resources": "Human Resources"
+    }
+  },
+  "models": {
+    "project": {
+      "name": "Name",
+      "description": "Description",
+      "dates": "Dates",
+      "color": "Color",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "from": "From",
+      "to": "to",
+      "client": "Client",
+      "employees": "Employees",
+      "collaborators": "Collaborators"
+    },
+    "employee": {
+      "firstname": "Firstname",
+      "lastname": "Lastname",
+      "first-lastname": "Firstname and Lastname",
+      "email": "Email",
+      "year": "year",
+      "years": "years",
+      "carreer": "Carreer",
+      "skill": "Skill",
+      "skills": "Skills",
+      "cv": "Curiuculum Vitae",
+      "experience": "Experience",
+      "projects": "Projects"
+    }
+  },
+  "employees": {
+    "employee": "Employee",
+    "employees": "Employees",
+    "header": "Employees",
+    "sub-header": "Manage your employees, add to project and collaborate",
+    "create": "Create employee",
+    "delete": "Delete",
+    "details": "Details",
+    "filters": {
+      "presets": "Presets",
+      "search": "Search...",
+      "skills": "Skills",
+      "date-range": "Fre between...",
+      "name": "Name of the Preset"
+    },
+    "modal": {
+      "delete": {
+        "title-single": "Delete employee",
+        "title-multiple": "Delete",
+        "message-multiple": "Are you sure you want to delete these employees ?",
+        "message-single": "Are you sure you want to delete this employee ?",
+        "accept": "Delete",
+        "reject": "Cancel"
+      }
+    },
+    "new": {
+      "header": "Create new employee",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "cv": {
+        "label": "Curiuculum Vitae",
+        "choose": "Choose a PDF file"
+      },
+      "skills": {
+        "header": "Skills",
+        "add": "Add skill",
+        "remove": "Remove skill"
+      },
+      "experience": "Experience (begin date)",
+      "cancel": "Cancel",
+      "create": "Create",
+      "success": {
+        "title": "Employee created",
+        "message": "The employee has been created successfully"
+      },
+      "errors": {
+        "firstName": "First name is required",
+        "lastName": "Last name is required",
+        "email": "Email is required",
+        "cv": "Curiuculum Vitae is required",
+        "skills": "Skill is required",
+        "experience": "Experience is required"
+      }
+    },
+    "add-to-project": {
+      "header": "Add employee to project",
+      "description": "Select the project you want to add the employee(s) to",
+      "selected": "Selected employee(s)",
+      "add": "Add",
+      "cancel": "Cancel"
+    }
+  },
+  "projects": {
+    "project": "Project",
+    "projects": "Projects",
+    "header": "My Projects",
+    "sub-header": "Manage your projects, add employees and collaborate",
+    "create": "Create project",
+    "archive": "Archive",
+    "details": "Details",
+    "add-to-project": "Add to project",
+    "no-employees": "No employee assigned",
+    "empty": "No project found",
+    "modal": {
+      "delete": {
+        "title-single": "Archive project",
+        "title-multiple": "Archive",
+        "message-multiple": "Are you sure you want to archive these projects ?",
+        "message-single": "Are you sure you want to archive this project ?",
+        "accept": "Archive",
+        "reject": "Annuler"
+      }
+    },
+    "new": {
+      "header": "Create new project",
+      "steps": {
+        "info": "Project information",
+        "members": "Project members"
+      },
+      "name": "Name",
+      "description": "Description",
+      "client": "Client",
+      "dates": "Dates",
+      "color": "Color",
+      "create": "Create",
+      "errors": {
+        "name": "Name is required",
+        "description": "Description is required",
+        "dates": {
+          "start": "Start date is required",
+          "end": "End date is required"
+        },
+        "color": "Color is required"
+      }
+    }
+  }
+}

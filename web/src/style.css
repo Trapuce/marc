@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Belanosima:wght@400;600;700&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap');
+@import 'primeicons/primeicons.css';
+@import 'tailwindcss';
+@import 'primeicons/primeicons.css';
+
+@theme {
+  --color-primary: #ff5858;
+  --color-light-grey: #dbdbdb;
+  --color-grey: #a7a7a7;
+  --color-dark-grey: #444444;
+  --color-light: #fefefe;
+  --color-dark: #222222;
+  --font-primary: 'Hanken Grotesk', sans-serif;
+  --font-secondary: 'Belanosima', sans-serif;
+}

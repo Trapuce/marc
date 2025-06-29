@@ -1,0 +1,161 @@
+{
+  "login": {
+    "connexion": "Connexion",
+    "email": "Email",
+    "error": {
+      "password": "Le mot de passe est erroné",
+      "email": "L'email n'est pas reconnu",
+      "connexion": "erreur de connexion"
+    },
+    "password": "Mot de passe",
+    "welcome": "Bienvenue.",
+    "loading": "Connexion..."
+  },
+  "header": {
+    "projects": "Projets",
+    "employees": "Employés",
+    "sign-in": "Connexion",
+    "profile": "Profil",
+    "menu": {
+      "settings": "Paramètres",
+      "messages": "Messages",
+      "logout": "Déconnexion",
+      "manager": "Chef de projet",
+      "hr": "Ressources humaines"
+    }
+  },
+  "models": {
+    "project": {
+      "name": "Nom",
+      "description": "Description",
+      "dates": "Dates",
+      "color": "Couleur",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "from": "Du",
+      "to": "au",
+      "client": "Client",
+      "employees": "Employés",
+      "collaborators": "Collaborateurs"
+    },
+    "employee": {
+      "firstname": "Prénom",
+      "lastname": "Nom",
+      "first-lastname": "Prénom et Nom",
+      "email": "Email",
+      "year": "an",
+      "years": "ans",
+      "skill": "Compétence",
+      "skills": "Compétences",
+      "cv": "Curiuculum Vitae",
+      "experience": "Expérience",
+      "projects": "Projets"
+    }
+  },
+  "employees": {
+    "employee": "Employé",
+    "employees": "Employés",
+    "header": "Employés",
+    "details": "Détails",
+    "delete": "Supprimer",
+    "filters": {
+      "presets": "Préréglages",
+      "search": "Rechercher",
+      "skills": "Compétences",
+      "date-range": "Libre entre...",
+      "name": "Nom du préréglage"
+    },
+    "modal": {
+      "delete": {
+        "title-single": "Supprimer l'employé",
+        "title-multiple": "Supprimer",
+        "message-multiple": "Etes-vous sûr de vouloir supprimer ces employés ?",
+        "message-single": "Etes-vous sûr de vouloir supprimer cet employé ?",
+        "accept": "Supprimer",
+        "reject": "Annuler"
+      }
+    },
+    "create": "Créer un employé",
+    "new": {
+      "header": "Créer un nouvel employé",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "cv": {
+        "label": "Curiuculum Vitae",
+        "choose": "Choisir un fichier PDF"
+      },
+      "skills": {
+        "header": "Compétences",
+        "add": "Ajouter une compétence",
+        "remove": "Réinitialiser"
+      },
+      "experience": "Expérience (date de début)",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "success": {
+        "title": "Employé créé",
+        "message": "L'employé a été créé avec succès"
+      },
+      "errors": {
+        "firstName": "Le prénom est requis",
+        "lastName": "Le nom est requis",
+        "email": "L'email est requis",
+        "cv": "Le Curiuculum Vitae est requis",
+        "skills": "Les compétences sont requises",
+        "experience": "L'expérience est requise"
+      }
+    },
+    "add-to-project": {
+      "header": "Ajouter des employés à un projet",
+      "description": "Selectionner le projet auquel ajouter le(s) employé(s)",
+      "selected": "Employé(s) sélectionné(s)",
+      "add": "Ajouter",
+      "cancel": "Annuler"
+    }
+  },
+  "projects": {
+    "project": "Projet",
+    "projects": "Projets",
+    "header": "Mes Projets",
+    "sub-header": "Gérez vos projets, ajoutez des employés et collaborez",
+    "create": "Nouveau projet",
+    "archive": "Archiver",
+    "details": "Détails",
+    "add-to-project": "Ajouter à un projet",
+    "no-employees": "No employee assigned",
+    "empty": "Aucun projet trouvé",
+    "modal": {
+      "delete": {
+        "title-single": "Archiver le projet",
+        "title-multiple": "Archiver",
+        "message-multiple": "Etes-vous sûr de vouloir archiver ces projets ?",
+        "message-single": "Etes-vous sûr de vouloir archiver ce projet ?",
+        "accept": "Archiver",
+        "reject": "Annuler"
+      }
+    },
+    "new": {
+      "header": "Creer un nouveau projet",
+      "steps": {
+        "info": "Informations",
+        "members": "Membres"
+      },
+      "name": "Nom",
+      "description": "Description",
+      "client": "Client",
+      "dates": "Dates",
+      "color": "Couleur",
+      "create": "Créer",
+      "errors": {
+        "name": "Nom est requis",
+        "description": "Description est requise",
+        "dates": {
+          "start": "Date de début est requise",
+          "end": "Date de fin est requise"
+        },
+        "color": "Couleur est requise"
+      }
+    }
+  }
+}

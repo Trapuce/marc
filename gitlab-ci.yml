@@ -1,0 +1,22 @@
+image: docker:latest
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  
+
+services:
+  - name: docker:latest
+
+stages:
+  - deploy
+
+
+deploy:
+  stage: deploy
+  tags:
+    - docker
+  script:
+    - pwd
+    - cd docker/
+    - docker-compose up -d
