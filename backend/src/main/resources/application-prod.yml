@@ -80,7 +80,6 @@ management:
       show-details: when-authorized
     prometheus:
       cache.time-to-live: 10s
-      access: when-authorized
   prometheus:
     metrics:
       export:
