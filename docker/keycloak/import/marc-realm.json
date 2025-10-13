@@ -912,7 +912,9 @@
       "secret": "marc-secret",
       "redirectUris": [
         "http://local.marc/*",
-        "http://local.marc/"
+        "http://local.marc/",
+        "http://marc.trapuce.tech/*",
+        "http://marc.trapuce.tech/"
       ],
       "webOrigins": [
         "*"
