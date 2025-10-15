@@ -93,7 +93,7 @@ services:
         condition: service_healthy
     networks:
       internal:
-        ipv4_address: 192.168.1.100
+       
 
   minio:
     image: "minio/minio:latest"
@@ -169,8 +169,7 @@ services:
       retries: 5
     networks:
       - internal
-    extra_hosts:
-      - "keycloak.marc.trapuce.tech:192.168.1.1" 
+   
 
 volumes:
   pgadmin_data:
@@ -184,6 +183,4 @@ volumes:
 networks:
   internal:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.1.0/24
+  
