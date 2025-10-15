@@ -81,8 +81,10 @@ services:
     container_name: keycloak-prod
     environment:
       - KEYCLOAK_ADMIN=admin
-      - KC_HOSTNAME=keycloak.marc.trapuce.tech 
+      - KC_HOSTNAME=keycloak.marc.trapuce.tech
       - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_PORT=80
+      - KC_PROXY=edge
       - KEYCLOAK_ADMIN_PASSWORD=admin
       - KEYCLOAK_IMPORT=/opt/keycloak/data/import/marc-realm.json
     volumes:
