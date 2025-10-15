@@ -1,21 +1,20 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:17.2
     container_name: postgres
     volumes:
-      - ./.postgresql/:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_USER=backend
       - POSTGRES_DB=backend
       - POSTGRES_PASSWORD=backendpass
-      - POSTGRES_HOST_AUTH_METHOD=trust
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U backend"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 10
-    ports:
-      - "5432:5432"
     networks:
       - internal
 
@@ -29,11 +28,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
     networks:
       - internal
 
@@ -43,41 +37,25 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_SERVER_ROOT_URL=http://grafana.marc.trapuce.tech
-      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     depends_on:
       prometheus:
         condition: service_started
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
     networks:
       - internal
 
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
-    restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/misc/ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
     networks:
       - internal
 
@@ -86,16 +64,10 @@ services:
     container_name: keycloak
     environment:
       - KEYCLOAK_ADMIN=admin
-      - KC_HOSTNAME=keycloak.marc.trapuce.tech 
-      - KC_HOSTNAME_STRICT=false
       - KEYCLOAK_ADMIN_PASSWORD=admin
-      - KEYCLOAK_IMPORT=/opt/keycloak/data/import/marc-realm.json
-    volumes:
-      - ./keycloak/import/:/opt/keycloak/data/import/
+      - KC_HOSTNAME_STRICT=false
     command:
       - start-dev
-      - --import-realm
-    restart: always
     depends_on:
       postgres:
         condition: service_healthy
@@ -109,12 +81,12 @@ services:
       - MINIO_ROOT_USER=minio
       - MINIO_ROOT_PASSWORD=password
     volumes:
-      - minio:/data/minio
-    command: minio server /data/minio --console-address ':8900'
+      - minio_data:/data
+    command: minio server /data --console-address ':8900'
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 20s
       retries: 3
     networks:
       - internal
@@ -125,42 +97,31 @@ services:
       minio:
         condition: service_healthy
     entrypoint: [ "/bin/sh", "-c", "
+      sleep 10;
       mc alias set myminio http://minio:9000 minio password;
-      mc ls myminio/trybucket || mc mb myminio/trybucket; "]
+      mc ls myminio/trybucket || mc mb myminio/trybucket; 
+      exit 0;"]
     networks:
       - internal
 
   nginx:
-    image: nginx:latest
-    container_name: mon_nginx
+    image: nginx:alpine
+    container_name: nginx_prod
     ports:
       - "80:80"
     volumes:
       - ./nginx/nginx-prod.conf:/etc/nginx/nginx.conf
-      - /var/run/docker.sock:/tmp/docker.sock
-    restart: always
     depends_on:
-      pgadmin:
-        condition: service_healthy
-      grafana:
-        condition: service_healthy
-      backend:
-        condition: service_healthy
-      front:
-        condition: service_healthy
+      - backend
+      - keycloak
     networks:
       - internal
 
-  front: 
+  front:
     container_name: front
     build:
       context: ../web/
       dockerfile: front.dockerfile
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
     networks:
       - internal
 
@@ -168,38 +129,32 @@ services:
     build:
       context: ../backend
       dockerfile: ./backend.dockerfile
-    container_name: backend
+    container_name: backend_prod
     depends_on:
       postgres:
         condition: service_healthy
       keycloak:
         condition: service_started
-      minio-init:
-        condition: service_completed_successfully
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/backend
       - SPRING_DATASOURCE_USERNAME=backend
       - SPRING_DATASOURCE_PASSWORD=backendpass
-      - SERVER_PORT=8082
-    restart: always
+      - MINIO_ENDPOINT=http://minio:9000
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8082/actuator/health" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: [ "CMD", "curl", "-f", "http://localhost:8082/api/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - internal
-   
 
 volumes:
+  postgres_data:
   pgadmin_data:
-  keycloak_data:
-    driver: local
   grafana_data:
-    driver: local
-  minio:
-    driver: local
+  minio_data:
 
 networks:
   internal:
