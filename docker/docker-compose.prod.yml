@@ -53,6 +53,11 @@ services:
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./grafana/dashboards:/var/lib/grafana/dashboards
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - internal
 
@@ -68,6 +73,11 @@ services:
         condition: service_healthy
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/misc/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - internal
 
@@ -129,6 +139,15 @@ services:
       - ./nginx/nginx-prod.conf:/etc/nginx/nginx.conf
       - /var/run/docker.sock:/tmp/docker.sock
     restart: always
+    depends_on:
+      pgadmin:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      front:
+        condition: service_healthy
     networks:
       - internal
 
@@ -137,6 +156,11 @@ services:
     build:
       context: ../web/
       dockerfile: front.dockerfile
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - internal
 
