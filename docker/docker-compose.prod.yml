@@ -141,6 +141,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=backend
       - SPRING_DATASOURCE_PASSWORD=backendpass
       - MINIO_ENDPOINT=http://minio:9000
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://keycloak.marc.trapuce.tech/realms/marc  
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8082/api/actuator/health" ]
       interval: 30s

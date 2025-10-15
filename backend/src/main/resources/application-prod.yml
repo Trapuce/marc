@@ -17,8 +17,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://keycloak.marc.trapuce.tech/realms/marc
-          jwk-set-uri: http://keycloak.marc.trapuce.tech/realms/marc/protocol/openid-connect/certs
+          issuer-uri: https://keycloak.marc.trapuce.tech/realms/marc
+          jwk-set-uri: https://keycloak.marc.trapuce.tech/realms/marc/protocol/openid-connect/certs
 
   servlet:
     multipart:
