@@ -76,7 +76,7 @@ services:
       - KC_DB=postgres
       - KC_DB_URL_HOST=postgres
       - KC_DB_URL_PORT=5432
-      - KC_DB_URL_DATABASE=keycloak
+      - KC_DB_URL_DATABASE=backend
       - KC_DB_USERNAME=backend
       - KC_DB_PASSWORD=backendpass
     volumes:
