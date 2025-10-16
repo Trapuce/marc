@@ -62,27 +62,32 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:22.0.3
     container_name: keycloak
-    command: >
-      start
-        --hostname keycloak.marc.trapuce.tech
-        --hostname-strict-https=true
-        --proxy edge
-        --http-enabled=true
-        --http-port=8080
+    command:
+      - start
+      - --hostname=keycloak.marc.trapuce.tech
+      - --proxy=edge
+      - --http-enabled=true
+      - --http-port=8080
+      - --hostname-strict=false
+      - --import-realm
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
       - KC_DB=postgres
-      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
+      - KC_DB_URL_HOST=postgres
+      - KC_DB_URL_PORT=5432
+      - KC_DB_URL_DATABASE=keycloak
       - KC_DB_USERNAME=backend
       - KC_DB_PASSWORD=backendpass
     volumes:
       - ./data/keycloak:/opt/keycloak/data
+      - ./keycloak/import/:/opt/keycloak/data/import/
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - internal
+
 
 
   minio:
