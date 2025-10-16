@@ -59,7 +59,7 @@ services:
     networks:
       - internal
 
-   keycloak:
+  keycloak:
     image: quay.io/keycloak/keycloak:22.0.3
     container_name: keycloak
     command: >
@@ -83,7 +83,6 @@ services:
         condition: service_healthy
     networks:
       - internal
-
 
 
   minio:
