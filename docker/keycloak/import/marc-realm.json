@@ -2435,7 +2435,7 @@
     "actionTokenGeneratedByUserLifespan-idp-verify-account-via-email": "",
     "parRequestUriLifespan": "60",
     "clientSessionMaxLifespan": "0",
-    "frontendUrl": "http://keycloak.marc/",
+    "frontendUrl": "https://keycloak.marc.trapuce.tech/",
     "acr.loa.map": "{}",
     "shortVerificationUri": ""
   },
