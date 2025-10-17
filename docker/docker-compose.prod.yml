@@ -66,8 +66,8 @@ services:
       - start
       - --hostname=keycloak.marc.trapuce.tech
       - --proxy=edge
-      - --http-enabled=true
-      - --http-port=8080
+      - --http-enabled=false
+      - --https-port=8443
       - --hostname-strict=false
       - --import-realm
     environment:
