@@ -1,7 +1,7 @@
 {
     "realm": "marc",
-    "auth-server-url": "https://keycloak.marc.trapuce.tech",
-    "ssl-required": "external",
+    "auth-server-url": "http://keycloak.marc.trapuce.tech",
+    "ssl-required": "none",
     "resource": "marcapp",
     "public-client": true,
     "confidential-port": 0
