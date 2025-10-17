@@ -79,6 +79,7 @@ services:
       - KC_DB_URL_DATABASE=backend
       - KC_DB_USERNAME=backend
       - KC_DB_PASSWORD=backendpass
+      - KC_HOSTNAME_STRICT_HTTPS=false
     volumes:
       - ./data/keycloak:/opt/keycloak/data
       - ./keycloak/import/:/opt/keycloak/data/import/
