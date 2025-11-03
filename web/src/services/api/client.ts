@@ -1,5 +1,5 @@
 import axios from 'axios'
-const baseURL = 'http://local.marc/api/'
+const baseURL = import.meta.env.VITE_API_URL || 'http://local.marc/api/'
 
 const apiClient = axios.create({
   baseURL: baseURL,
