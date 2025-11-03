@@ -2,7 +2,9 @@
 
 set -e
 
-echo "🚀 Déploiement de l'application MARC avec Traefik"
+echo "🚀 Déploiement de l'application MARC avec Traefik existant"
+echo ""
+echo "⚠️  IMPORTANT: Ce script suppose que vous avez déjà un Traefik en cours d'exécution"
 echo ""
 
 # Vérifier si le réseau web existe
@@ -10,18 +12,22 @@ if ! docker network ls | grep -q " web "; then
     echo "📦 Création du réseau Docker 'web'..."
     docker network create web
     echo "✅ Réseau 'web' créé"
+    echo "⚠️  N'oubliez pas de connecter votre Traefik au réseau web:"
+    echo "   docker network connect web <nom-du-container-traefik>"
 else
     echo "✅ Réseau 'web' existe déjà"
 fi
 
-# Créer le répertoire letsencrypt si nécessaire
-if [ ! -d "./letsencrypt" ]; then
-    echo "📁 Création du répertoire letsencrypt..."
-    mkdir -p ./letsencrypt
-    chmod 600 ./letsencrypt
-    echo "✅ Répertoire letsencrypt créé"
+# Vérifier si Traefik est sur le réseau web
+echo ""
+echo "🔍 Vérification du Traefik existant..."
+TRAEFIK_CONTAINERS=$(docker network inspect web 2>/dev/null | grep -o '"Name":"[^"]*traefik[^"]*"' | cut -d'"' -f4 || echo "")
+if [ -z "$TRAEFIK_CONTAINERS" ]; then
+    echo "⚠️  Aucun container Traefik trouvé sur le réseau 'web'"
+    echo "   Assurez-vous que votre Traefik est connecté au réseau web:"
+    echo "   docker network connect web <nom-du-container-traefik>"
 else
-    echo "✅ Répertoire letsencrypt existe déjà"
+    echo "✅ Traefik trouvé sur le réseau: $TRAEFIK_CONTAINERS"
 fi
 
 # Vérifier que les fichiers nécessaires existent
@@ -72,7 +78,9 @@ echo "   3. Accédez à l'application: https://marc.trapuce.tech"
 echo ""
 echo "⚠️  Important:"
 echo "   - Assurez-vous que les DNS pointent vers ce serveur"
-echo "   - Les certificats SSL seront générés automatiquement par Let's Encrypt"
-echo "   - Cela peut prendre quelques minutes lors du premier démarrage"
+echo "   - Les certificats SSL sont gérés par votre Traefik existant"
+echo "   - Vérifiez que votre Traefik a les entrypoints 'web' et 'websecure'"
+echo "   - Vérifiez que votre Traefik a un certificate resolver 'myresolver'"
+echo "   - Ou modifiez les labels dans docker-compose.traefik.yml pour correspondre à votre config"
 echo ""
 

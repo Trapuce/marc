@@ -1,28 +1,38 @@
-# Déploiement avec Traefik
+# Déploiement avec Traefik existant
 
-Ce guide explique comment déployer l'application MARC avec Traefik comme reverse proxy.
+Ce guide explique comment déployer l'application MARC en utilisant un Traefik existant comme reverse proxy.
 
 ## Prérequis
 
-1. **Réseau Docker externe "web"** : Le réseau `web` doit être créé avant le déploiement
+1. **Traefik existant** : Vous devez avoir un container Traefik déjà en cours d'exécution
+   - Le Traefik doit être configuré avec le provider Docker
+   - Il doit être connecté au réseau Docker "web"
+
+2. **Réseau Docker "web"** : Le réseau `web` doit exister et être connecté à votre Traefik
    ```bash
+   # Vérifier si le réseau existe
+   docker network ls | grep web
+   
+   # Si nécessaire, créer le réseau
    docker network create web
+   
+   # Connecter votre Traefik au réseau (si pas déjà fait)
+   docker network connect web <nom-du-container-traefik>
    ```
 
-2. **DNS configuré** : Assurez-vous que les sous-domaines suivants pointent vers votre serveur :
+3. **Configuration Traefik** : Votre Traefik doit avoir :
+   - Entrypoint `web` sur le port 80 (HTTP)
+   - Entrypoint `websecure` sur le port 443 (HTTPS)
+   - Certificate resolver `myresolver` configuré (ou modifier les labels dans docker-compose.traefik.yml)
+
+4. **DNS configuré** : Assurez-vous que les sous-domaines suivants pointent vers votre serveur :
    - `marc.trapuce.tech` → IP du serveur
    - `backend.marc.trapuce.tech` → IP du serveur
    - `grafana.marc.trapuce.tech` → IP du serveur
    - `keycloak.marc.trapuce.tech` → IP du serveur
 
-3. **Ports ouverts** : Les ports suivants doivent être ouverts :
-   - `80` (HTTP)
-   - `443` (HTTPS)
-   - `8080` (Dashboard Traefik - optionnel)
-
 ## Structure des services
 
-- **Traefik** : Reverse proxy avec gestion automatique des certificats SSL (Let's Encrypt)
 - **Frontend** : Application Vue.js accessible sur `marc.trapuce.tech`
 - **Backend** : API Spring Boot accessible sur `backend.marc.trapuce.tech`
 - **Keycloak** : Service d'authentification accessible sur `keycloak.marc.trapuce.tech`
@@ -33,17 +43,30 @@ Ce guide explique comment déployer l'application MARC avec Traefik comme revers
 
 ## Configuration
 
-### 1. Créer le réseau Docker
+### 1. Vérifier la configuration Traefik
+
+Vérifiez que votre Traefik existant a les entrypoints et certificate resolver nécessaires. Si votre Traefik utilise des noms différents, vous devrez adapter les labels dans `docker-compose.traefik.yml`.
+
+**Noms utilisés dans ce fichier :**
+- Entrypoints : `web` (HTTP) et `websecure` (HTTPS)
+- Certificate resolver : `myresolver`
+
+**Pour modifier :** Recherchez et remplacez dans `docker-compose.traefik.yml` :
+- `entrypoints=web` → votre entrypoint HTTP
+- `entrypoints=websecure` → votre entrypoint HTTPS
+- `tls.certresolver=myresolver` → votre certificate resolver
+
+### 2. Vérifier le réseau Docker
 
 ```bash
+# Vérifier que le réseau "web" existe
+docker network ls | grep web
+
+# Si le réseau n'existe pas, le créer
 docker network create web
-```
 
-### 2. Créer le répertoire pour Let's Encrypt
-
-```bash
-mkdir -p ./letsencrypt
-chmod 600 ./letsencrypt
+# Vérifier que votre Traefik est sur le réseau web
+docker network inspect web
 ```
 
 ### 3. Déployer les services
@@ -80,13 +103,9 @@ Une fois déployé, les services sont accessibles via :
 - **Grafana** : https://grafana.marc.trapuce.tech
   - Username : `admin`
   - Password : `admin`
-- **Traefik Dashboard** : http://VOTRE_IP:8080 (non sécurisé, seulement pour le développement)
-
 ## Certificats SSL
 
-Traefik gère automatiquement les certificats SSL via Let's Encrypt. Les certificats sont stockés dans `./letsencrypt/acme.json`.
-
-**Important** : Le fichier `acme.json` contient des clés privées. Ne le commitez jamais dans Git !
+Les certificats SSL sont gérés par votre Traefik existant. Assurez-vous que votre configuration Traefik inclut un certificate resolver pour Let's Encrypt.
 
 ## Redirections HTTP → HTTPS
 
@@ -124,7 +143,15 @@ Grafana est configuré avec :
 
 ### Erreur "network web not found"
 
-Créez le réseau : `docker network create web`
+1. Créez le réseau : `docker network create web`
+2. Connectez votre Traefik au réseau : `docker network connect web <nom-du-container-traefik>`
+
+### Les services ne sont pas détectés par Traefik
+
+1. Vérifiez que les services sont sur le réseau "web" : `docker network inspect web`
+2. Vérifiez que votre Traefik a le provider Docker activé
+3. Vérifiez les noms d'entrypoints et certificate resolver dans votre Traefik
+4. Consultez les logs de Traefik : `docker logs <nom-du-container-traefik>`
 
 ### Services non accessibles
 
