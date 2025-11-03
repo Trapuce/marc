@@ -29,7 +29,7 @@ spring:
 springdoc:
   api-docs:
     server:
-      url: "http://back.marc/api"
+      url: "http://backend.marc/api"
   swagger-ui:
     path: /swagger-ui
 

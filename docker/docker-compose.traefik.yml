@@ -1,12 +1,5 @@
 version: '3.8'
 
-# ⚠️ IMPORTANT: Ce fichier utilise un Traefik existant
-# Assurez-vous que:
-# 1. Le réseau "web" existe et que votre Traefik y est connecté
-# 2. Les entrypoints "web" (port 80) et "websecure" (port 443) sont configurés
-# 3. Le certificate resolver "myresolver" est configuré dans Traefik
-#    (ou modifiez les labels pour utiliser le nom de votre resolver)
-
 services:
   postgres:
     image: postgres:17.2
@@ -23,9 +16,75 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - web
       - internal
-    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_ROOT_URL=https://grafana.marc.trapuce.tech
+      - GF_SERVER_DOMAIN=grafana.marc.trapuce.tech
+    depends_on:
+      prometheus:
+        condition: service_started
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - internal
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.marc.trapuce.tech`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.docker.network=web"
+      # Redirection HTTP vers HTTPS
+      - "traefik.http.routers.grafana-http.rule=Host(`grafana.marc.trapuce.tech`)"
+      - "traefik.http.routers.grafana-http.entrypoints=web"
+      - "traefik.http.routers.grafana-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - internal
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.marc.trapuce.tech`)"
+      - "traefik.http.routers.pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin.tls.certresolver=myresolver"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+      - "traefik.docker.network=web"
+      # Redirection HTTP vers HTTPS
+      - "traefik.http.routers.pgadmin-http.rule=Host(`pgadmin.marc.trapuce.tech`)"
+      - "traefik.http.routers.pgadmin-http.entrypoints=web"
+      - "traefik.http.routers.pgadmin-http.middlewares=redirect-to-https"
 
   keycloak:
     image: quay.io/keycloak/keycloak:22.0.3
@@ -48,7 +107,7 @@ services:
       - KC_DB_USERNAME=backend
       - KC_DB_PASSWORD=backendpass
       - KC_HOSTNAME_STRICT_HTTPS=false
-      - KC_PROXY_ADDRESS_FORWARDING=true
+      - KC_PROXY=edge
     volumes:
       - ./data/keycloak:/opt/keycloak/data
       - ./keycloak/import/:/opt/keycloak/data/import/
@@ -56,148 +115,19 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - web
       - internal
+      - web
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.keycloak.rule=Host(`keycloak.marc.trapuce.tech`)"
       - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.routers.keycloak.tls.certresolver=myresolver"
-      - "traefik.http.routers.keycloak.service=keycloak"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
-      - "traefik.http.routers.keycloak.middlewares=keycloak-headers"
-      - "traefik.http.middlewares.keycloak-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.keycloak-headers.headers.customrequestheaders.X-Forwarded-Host=keycloak.marc.trapuce.tech"
+      - "traefik.docker.network=web"
+      # Redirection HTTP vers HTTPS
       - "traefik.http.routers.keycloak-http.rule=Host(`keycloak.marc.trapuce.tech`)"
       - "traefik.http.routers.keycloak-http.entrypoints=web"
       - "traefik.http.routers.keycloak-http.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-    restart: unless-stopped
-
-  backend:
-    build:
-      context: ../backend
-      dockerfile: ./backend.dockerfile
-    container_name: backend
-    depends_on:
-      postgres:
-        condition: service_healthy
-      keycloak:
-        condition: service_started
-      minio-init:
-        condition: service_completed_successfully
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/backend
-      - SPRING_DATASOURCE_USERNAME=backend
-      - SPRING_DATASOURCE_PASSWORD=backendpass
-      - MINIO_ENDPOINT=http://minio:9000
-      - SERVER_PORT=8082
-      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://keycloak.marc.trapuce.tech/realms/marc
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/api/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - web
-      - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`backend.marc.trapuce.tech`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=myresolver"
-      - "traefik.http.routers.backend.service=backend"
-      - "traefik.http.services.backend.loadbalancer.server.port=8082"
-      - "traefik.http.routers.backend.middlewares=backend-headers"
-      - "traefik.http.middlewares.backend-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.backend-headers.headers.customrequestheaders.X-Forwarded-Host=backend.marc.trapuce.tech"
-      - "traefik.http.routers.backend-http.rule=Host(`backend.marc.trapuce.tech`)"
-      - "traefik.http.routers.backend-http.entrypoints=web"
-      - "traefik.http.routers.backend-http.middlewares=redirect-to-https-backend"
-      - "traefik.http.middlewares.redirect-to-https-backend.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https-backend.redirectscheme.permanent=true"
-    restart: unless-stopped
-
-  front:
-    container_name: front
-    build:
-      context: ../web/
-      dockerfile: front.dockerfile
-      args:
-        VITE_API_URL: https://backend.marc.trapuce.tech/api
-    networks:
-      - web
-      - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.front.rule=Host(`marc.trapuce.tech`)"
-      - "traefik.http.routers.front.entrypoints=websecure"
-      - "traefik.http.routers.front.tls.certresolver=myresolver"
-      - "traefik.http.routers.front.service=front"
-      - "traefik.http.services.front.loadbalancer.server.port=80"
-      - "traefik.http.routers.front.middlewares=front-headers"
-      - "traefik.http.middlewares.front-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.front-headers.headers.customrequestheaders.X-Forwarded-Host=marc.trapuce.tech"
-      - "traefik.http.routers.front-http.rule=Host(`marc.trapuce.tech`)"
-      - "traefik.http.routers.front-http.entrypoints=web"
-      - "traefik.http.routers.front-http.middlewares=redirect-to-https-front"
-      - "traefik.http.middlewares.redirect-to-https-front.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https-front.redirectscheme.permanent=true"
-    restart: unless-stopped
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_SERVER_ROOT_URL=https://grafana.marc.trapuce.tech
-      - GF_SERVER_SERVE_FROM_SUB_PATH=false
-      - GF_SERVER_DOMAIN=grafana.marc.trapuce.tech
-    depends_on:
-      prometheus:
-        condition: service_started
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
-    networks:
-      - web
-      - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.grafana.rule=Host(`grafana.marc.trapuce.tech`)"
-      - "traefik.http.routers.grafana.entrypoints=websecure"
-      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
-      - "traefik.http.routers.grafana.service=grafana"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
-      - "traefik.http.routers.grafana.middlewares=grafana-headers"
-      - "traefik.http.middlewares.grafana-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.grafana-headers.headers.customrequestheaders.X-Forwarded-Host=grafana.marc.trapuce.tech"
-      - "traefik.http.routers.grafana-http.rule=Host(`grafana.marc.trapuce.tech`)"
-      - "traefik.http.routers.grafana-http.entrypoints=web"
-      - "traefik.http.routers.grafana-http.middlewares=redirect-to-https-grafana"
-      - "traefik.http.middlewares.redirect-to-https-grafana.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https-grafana.redirectscheme.permanent=true"
-    restart: unless-stopped
-
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - internal
-    restart: unless-stopped
 
   minio:
     image: "minio/minio:latest"
@@ -209,39 +139,92 @@ services:
       - minio_data:/data
     command: minio server /data --console-address ':8900'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
       retries: 3
     networks:
       - internal
-    restart: unless-stopped
 
   minio-init:
     image: minio/mc
     depends_on:
       minio:
         condition: service_healthy
-    entrypoint:
-      - "/bin/sh"
-      - "-c"
-      - |
-        sleep 10;
-        mc alias set myminio http://minio:9000 minio password;
-        mc ls myminio/trybucket || mc mb myminio/trybucket;
-        exit 0;
+    entrypoint: [ "/bin/sh", "-c", "
+      sleep 10;
+      mc alias set myminio http://minio:9000 minio password;
+      mc ls myminio/trybucket || mc mb myminio/trybucket; 
+      exit 0;"]
     networks:
       - internal
-    restart: "no"
+
+  front:
+    container_name: front
+    build:
+      context: ../web/
+      dockerfile: front.dockerfile
+    networks:
+      - internal
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.front.rule=Host(`marc.trapuce.tech`)"
+      - "traefik.http.routers.front.entrypoints=websecure"
+      - "traefik.http.routers.front.tls.certresolver=myresolver"
+      - "traefik.http.services.front.loadbalancer.server.port=80"
+      - "traefik.docker.network=web"
+      # Redirection HTTP vers HTTPS
+      - "traefik.http.routers.front-http.rule=Host(`marc.trapuce.tech`)"
+      - "traefik.http.routers.front-http.entrypoints=web"
+      - "traefik.http.routers.front-http.middlewares=redirect-to-https"
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ./backend.dockerfile
+    container_name: backend_prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/backend
+      - SPRING_DATASOURCE_USERNAME=backend
+      - SPRING_DATASOURCE_PASSWORD=backendpass
+      - MINIO_ENDPOINT=http://minio:9000
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://keycloak.marc.trapuce.tech/realms/marc  
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8082/api/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - internal
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`backend.marc.trapuce.tech`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=8082"
+      - "traefik.docker.network=web"
+      # Redirection HTTP vers HTTPS
+      - "traefik.http.routers.backend-http.rule=Host(`backend.marc.trapuce.tech`)"
+      - "traefik.http.routers.backend-http.entrypoints=web"
+      - "traefik.http.routers.backend-http.middlewares=redirect-to-https"
 
 volumes:
   postgres_data:
+  pgadmin_data:
   grafana_data:
   minio_data:
 
 networks:
-  web:
-    external: true
   internal:
     driver: bridge
-
+  web:
+    external: true
